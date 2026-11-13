@@ -522,7 +522,8 @@
 	  
 	
 
-    let examDurationMinutes = 60; 
+    let examDurationMinutes = 60;
+    const MIN_FINISH_MINUTES = 40;
     let maxViolations = 5;
     let timeRemaining = examDurationMinutes * 60;
     let violationCount = 0;
@@ -536,7 +537,8 @@
     const warningModal = document.getElementById('warningModal');
     const lockScreen = document.getElementById('lockScreen');
     const lockMessage = document.getElementById('lockMessage');
-    const timerDisplay = document.getElementById('timer');\n    const finishExamBtn = document.getElementById('finishExamBtn');
+    const timerDisplay = document.getElementById('timer');
+    const finishExamBtn = document.getElementById('finishExamBtn');
     const violationText = document.getElementById('violationText');
     const warningText = document.getElementById('warningText');
     const frameContainer = document.getElementById('frameContainer');
