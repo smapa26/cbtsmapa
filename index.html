@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <head>
@@ -316,6 +316,19 @@
     }
     .finish-btn:hover { background: #fee2e2; }
 
+    /* Tombol SELESAI muncul dengan animasi setelah 40 menit */
+    .finish-btn.finish-ready {
+      animation: finishReveal 0.65s ease-out both, finishPulse 2.2s ease-in-out 0.65s infinite;
+    }
+    @keyframes finishReveal {
+      from { opacity: 0; transform: translateY(-8px) scale(.92); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes finishPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.16); }
+      50%      { box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.08); }
+    }
+
     .timer-warning {
       background: #ef4444;
       border-color: #dc2626;
@@ -491,7 +504,7 @@
     <!-- Timer dan tombol selesai -->
     <div class="timer-actions">
       <div class="timer-badge" id="timer">60:00</div>
-      <button type="button" class="finish-btn" id="finishExamBtn" onclick="finishExam()">SELESAI</button>
+      <button type="button" class="finish-btn hidden" id="finishExamBtn" onclick="finishExam()">SELESAI</button>
     </div>
   </header>
 
@@ -523,7 +536,7 @@
     const warningModal = document.getElementById('warningModal');
     const lockScreen = document.getElementById('lockScreen');
     const lockMessage = document.getElementById('lockMessage');
-    const timerDisplay = document.getElementById('timer');
+    const timerDisplay = document.getElementById('timer');\n    const finishExamBtn = document.getElementById('finishExamBtn');
     const violationText = document.getElementById('violationText');
     const warningText = document.getElementById('warningText');
     const frameContainer = document.getElementById('frameContainer');
@@ -727,6 +740,13 @@
 
     async function finishExam() {
       if (!isExamActive) return;
+
+      const elapsedSeconds = (examDurationMinutes * 60) - timeRemaining;
+      if (elapsedSeconds < MIN_FINISH_MINUTES * 60) {
+        alert("Tombol SELESAI baru dapat digunakan setelah 40 menit pengerjaan.");
+        return;
+      }
+
       const confirmed = confirm("Apakah Anda yakin ingin menyelesaikan ujian dan kembali ke menu awal?");
       if (!confirmed) return;
 
@@ -759,14 +779,35 @@
 
     function startTimer() {
       clearInterval(timerInterval);
+
       const tick = () => {
         timeRemaining = Math.max(0, Math.ceil((serverExpiresAt - Date.now()) / 1000));
         const minutes = Math.floor(timeRemaining / 60), seconds = timeRemaining % 60;
         timerDisplay.textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
-        if (timeRemaining <= 300) timerDisplay.classList.add('timer-warning');
-        if (timeRemaining <= 0) { clearInterval(timerInterval); lockDevicePermanently("Waktu pengerjaan ujian telah berakhir!"); }
+
+        // Tombol SELESAI aktif setelah 40 menit waktu ujian berlalu.
+        const elapsedSeconds = (examDurationMinutes * 60) - timeRemaining;
+        const finishAllowed = elapsedSeconds >= MIN_FINISH_MINUTES * 60;
+
+        if (finishAllowed && finishExamBtn.classList.contains("hidden")) {
+          finishExamBtn.classList.remove("hidden");
+          finishExamBtn.classList.add("finish-ready");
+        } else if (!finishAllowed) {
+          finishExamBtn.classList.add("hidden");
+          finishExamBtn.classList.remove("finish-ready");
+        }
+
+        if (timeRemaining <= 300) timerDisplay.classList.add("timer-warning");
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          finishExamBtn.classList.add("hidden");
+          finishExamBtn.classList.remove("finish-ready");
+          lockDevicePermanently("Waktu pengerjaan ujian telah berakhir!");
+        }
       };
-      tick(); timerInterval = setInterval(tick, 1000);
+
+      tick();
+      timerInterval = setInterval(tick, 1000);
     }
 
     async function recordViolation(reason) {
